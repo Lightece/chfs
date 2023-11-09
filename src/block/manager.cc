@@ -76,34 +76,32 @@ auto BlockManager::write_block(block_id_t block_id, const u8 *data)
     -> ChfsNullResult {
   
   // TODO: Implement this function.
-  UNIMPLEMENTED();
-
+//  std::cout << "block/manager/write_block: id=" << block_id << std::endl;
+  memcpy(this->block_data + block_id * this->block_sz, data, this->block_sz);
   return KNullOk;
 }
 
 auto BlockManager::write_partial_block(block_id_t block_id, const u8 *data,
                                        usize offset, usize len)
     -> ChfsNullResult {
-  
   // TODO: Implement this function.
-  UNIMPLEMENTED();
-
+//  std::cout << "block/manager/write_partial_block: id=" << block_id<< ", offset="<< offset << ", len=" << len << std::endl;
+  memcpy(this->block_data + block_id * this->block_sz + offset, data, len);
   return KNullOk;
 }
 
 auto BlockManager::read_block(block_id_t block_id, u8 *data) -> ChfsNullResult {
-
   // TODO: Implement this function.
-  UNIMPLEMENTED();
-
+  u8* curr_byte = this->block_data + block_id * this->block_sz; // get the first byte of the block to write
+  for(usize i = 0; i < this->block_sz; i++){
+    data[i] = curr_byte[i];
+  }
   return KNullOk;
 }
 
 auto BlockManager::zero_block(block_id_t block_id) -> ChfsNullResult {
-  
   // TODO: Implement this function.
-  UNIMPLEMENTED();
-
+  std::memset( this->block_data + block_id * this->block_sz, 0, this->block_sz);
   return KNullOk;
 }
 

@@ -98,7 +98,7 @@ public:
   auto get_attr(inode_id_t id) -> ChfsResult<FileAttr>;
 
   /**
-   * Set the type of the inode
+   * Get the type of the inode
    */
   auto get_type(inode_id_t id) -> ChfsResult<InodeType>;
 
@@ -131,7 +131,7 @@ private:
 
   /**
    * Read the inode to a buffer
-   * @param block_id_t: the block id that stores the inode
+   * @param inode_id_t: the block id that stores the inode
    */
   auto read_inode(inode_id_t id, std::vector<u8> &buffer)
       -> ChfsResult<block_id_t>;
