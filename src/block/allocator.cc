@@ -93,14 +93,13 @@ auto BlockAllocator::free_block_cnt() const -> usize {
 // Your implementation
 auto BlockAllocator::allocate() -> ChfsResult<block_id_t> {
   std::vector<u8> buffer(bm->block_size());
-
-  for (uint i = 0; i < this->bitmap_block_cnt; i++) {
-    bm->read_block(i + this->bitmap_block_id, buffer.data());
+  for (uint i = this->bitmap_block_id; i < this->bitmap_block_id + this->bitmap_block_cnt; i++) {
+    bm->read_block(i , buffer.data());
 
     // The index of the allocated bit inside current bitmap block.
     std::optional<block_id_t> res = std::nullopt;
 
-    if (i == this->bitmap_block_cnt - 1) {
+    if (i == this->bitmap_block_id + this->bitmap_block_cnt - 1) {
       // If current block is the last block of the bitmap.
 
       // TODO: Find the first free bit of current bitmap block
@@ -124,8 +123,8 @@ auto BlockAllocator::allocate() -> ChfsResult<block_id_t> {
       // 3. Calculate the value of `retval`.
       auto temp_bitmap = Bitmap(buffer.data(), bm->block_size());
       temp_bitmap.set(*res);
-      bm->write_block(i + this->bitmap_block_id, buffer.data()); // addr of the bitmap block
-      retval = i * this->bm->block_size() * KBitsPerByte + *res;
+      bm->write_block(i, buffer.data()); // addr of the bitmap block
+      retval = (i - this->bitmap_block_id) * this->bm->block_size() * KBitsPerByte + *res + this->bitmap_block_id + this->bitmap_block_cnt;
       return ChfsResult<block_id_t>(retval);
     }
   }
@@ -134,6 +133,7 @@ auto BlockAllocator::allocate() -> ChfsResult<block_id_t> {
 
 // Your implementation
 auto BlockAllocator::deallocate(block_id_t block_id) -> ChfsNullResult {
+  std::cout << "allocator/deallocate: block_id=" << block_id << std::endl;
   if (block_id >= this->bm->total_blocks()) {
     return ChfsNullResult(ErrorType::INVALID_ARG);
   }
@@ -144,17 +144,17 @@ auto BlockAllocator::deallocate(block_id_t block_id) -> ChfsNullResult {
   //    if you find `block_id` is invalid (e.g. already freed).
 
   // calculate the block id of the bitmap block
-  auto curr_bitmap_block_id = block_id / (this->bm->block_size() * KBitsPerByte);
-  auto curr_bit = block_id % (this->bm->block_size() * KBitsPerByte);
+  auto curr_bitmap_block_idx = (block_id - this->bitmap_block_id - this->bitmap_block_cnt) / (this->bm->block_size() * KBitsPerByte);
+  auto curr_bit = (block_id - this->bitmap_block_id - this->bitmap_block_cnt) % (this->bm->block_size() * KBitsPerByte);
   std::vector<u8> buffer(bm->block_size());
-  bm->read_block(curr_bitmap_block_id + this->bitmap_block_id, buffer.data());
+  bm->read_block(curr_bitmap_block_idx + this->bitmap_block_id, buffer.data());
 
   auto temp_bitmap = Bitmap(buffer.data(), bm->block_size());
   if(!temp_bitmap.check(curr_bit)){
     return ChfsNullResult(ErrorType::INVALID_ARG);
   }
   temp_bitmap.clear(curr_bit);
-  bm->write_block(curr_bitmap_block_id + this->bitmap_block_id, buffer.data());
+  bm->write_block(curr_bitmap_block_idx + this->bitmap_block_id, buffer.data());
   return KNullOk;
 }
 

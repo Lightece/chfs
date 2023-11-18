@@ -56,7 +56,6 @@ auto append_to_directory(std::string src, std::string filename, inode_id_t id)
 void parse_directory(std::string &src, std::list<DirectoryEntry> &list) {
 
   // TODO: Implement this function.
-  std::cout << "parse_directory: src=" << src << std::endl;
   std::string tmp(src);
   while (tmp.length() > 0) {
     auto pos = tmp.find('/');
@@ -74,12 +73,10 @@ void parse_directory(std::string &src, std::list<DirectoryEntry> &list) {
     }
     tmp = tmp.substr(pos + 1);
   }
-  std::cout << "parse_directory: src=" << src << std::endl;
 }
 
 // {Your code here}
 auto rm_from_directory(std::string src, std::string filename) -> std::string {
-//  std::cout << "1rm_from_directory: src=" << src <<", filename=" << filename << std::endl;
   auto res = std::string("");
 
   // TODO: Implement this function.
@@ -93,7 +90,6 @@ auto rm_from_directory(std::string src, std::string filename) -> std::string {
     }
   }
   res = dir_list_to_string(list);
-//  std::cout << "rm_from_directory: src=" << src <<", filename=" << filename << std::endl;
   std::cout << "rm_from_directory: res=" << res << std::endl;
   return res;
 }
@@ -105,7 +101,7 @@ auto read_directory(FileOperation *fs, inode_id_t id,
                     std::list<DirectoryEntry> &list) -> ChfsNullResult {
   
   // TODO: Implement this function.
-  std::cout << "read_directory: id=" << id << std::endl;
+//  std::cout << "read_directory: id=" << id << std::endl;
   auto read_res = fs->read_file(id);
   if (read_res.is_err()) {
     return ChfsNullResult(read_res.unwrap_error());
@@ -113,7 +109,6 @@ auto read_directory(FileOperation *fs, inode_id_t id,
   auto data = read_res.unwrap();
   // turn data to std::string
   std::string src(data.begin(), data.end());
-  std::cout << "read_directory: src=" << src << std::endl;
   parse_directory(src, list);
   return KNullOk;
 }
@@ -122,7 +117,7 @@ auto read_directory(FileOperation *fs, inode_id_t id,
 auto FileOperation::lookup(inode_id_t id, const char *name)
     -> ChfsResult<inode_id_t> {
   std::list<DirectoryEntry> list;
-  std::cout << "lookup: id=" << id << ", name=" << name << std::endl;
+//  std::cout << "lookup: id=" << id << ", name=" << name << std::endl;
   // TODO: Implement this function.
   auto read_res = read_directory(this, id, list);
   if (read_res.is_err()) {
@@ -130,9 +125,11 @@ auto FileOperation::lookup(inode_id_t id, const char *name)
   }
   for (const auto &entry : list) {
     if (entry.name.compare(name) == 0) {
+      std::cout << "directory op/lookup: id=" << id << ", name=" << name << ", found" << std::endl;
       return ChfsResult<inode_id_t>(entry.id);
     }
   }
+  std::cout << "directory op/lookup: id=" << id << ", name=" << name << ", not found" << std::endl;
   return ChfsResult<inode_id_t>(ErrorType::NotExist);
 }
 
@@ -151,10 +148,11 @@ auto FileOperation::mk_helper(inode_id_t id, const char *name, InodeType type)
     return ChfsResult<inode_id_t>(read_res.unwrap_error());
   }
   for (const auto &entry : list) {
-    if (entry.name.compare(name) == 0) {
+    if (entry.name == name) {
       return ChfsResult<inode_id_t>(ErrorType::AlreadyExist);
     }
   }
+
   auto alloc_res = alloc_inode(type);
   if (alloc_res.is_err()) {
     return ChfsResult<inode_id_t>(alloc_res.unwrap_error());
@@ -167,6 +165,7 @@ auto FileOperation::mk_helper(inode_id_t id, const char *name, InodeType type)
   std::string content = dir_list_to_string(list);
   std::vector<u8> data(content.begin(), content.end());
   auto write_res = write_file(id, data);
+  std::cout << "mkhelper write to parent dir finished, write size=" << list.size() << std::endl;
   if (write_res.is_err()) {
     return ChfsResult<inode_id_t>(write_res.unwrap_error());
   }

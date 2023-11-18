@@ -81,7 +81,7 @@ class Inode {
 
   InodeType type;
   FileAttr inner_attr;
-  u32 block_size;
+  u32 block_size = DiskBlockSize;
 
   // we stored the number of blocks in the inode to prevent
   // re-calculation during runtime
@@ -100,7 +100,7 @@ public:
   Inode(InodeType type, usize block_size)
       : type(type), inner_attr(), block_size(block_size) {
     CHFS_VERIFY(block_size > sizeof(Inode), "Block size too small");
-    nblocks = (block_size - sizeof(Inode)) / sizeof(block_id_t);
+    nblocks = (block_size - sizeof(Inode)) / (sizeof(block_id_t)+sizeof(mac_id_t ) + sizeof(version_t)) - 1;
     inner_attr.set_all_time(time(0));
   }
 
@@ -139,7 +139,7 @@ public:
    * Get the maximum file size supported by the inode
    */
   auto max_file_sz_supported() const -> u64 {
-    const auto max_blocks_in_block = block_size / sizeof(block_id_t);
+    const auto max_blocks_in_block = block_size / (sizeof(block_id_t)+sizeof(mac_id_t ));
     return static_cast<u64>(max_blocks_in_block) *
                static_cast<u64>(block_size) +
            static_cast<u64>(this->get_nblocks() - 1) *

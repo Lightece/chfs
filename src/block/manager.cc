@@ -120,7 +120,7 @@ auto BlockManager::write_partial_block(block_id_t block_id, const u8 *data,
 auto BlockManager::read_block(block_id_t block_id, u8 *data) -> ChfsNullResult {
 
   // TODO: Implement this function.
-  u8* curr_byte = this->block_data + block_id * this->block_sz; // get the first byte of the block to write
+  u8* curr_byte = this->block_data + block_id * this->block_sz; // get the first byte of the block to read
   for(usize i = 0; i < this->block_sz; i++){
     data[i] = curr_byte[i];
   }
